@@ -4,7 +4,8 @@ import LoadingScreen from './components/LoadingScreen';
 import { GameStep, GameState, GameType, GameMetadata, GameStepDetail } from './types';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// دسترسی ایمن به API Key
+const safeApiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
 
 const GAMES: GameMetadata[] = [
   {
@@ -132,9 +133,15 @@ const App: React.FC = () => {
   };
 
   const fetchAiCommentary = async () => {
+    if (!safeApiKey) {
+      setAiMessage("ریاضیات هرگز دروغ نمی‌گوید.");
+      return;
+    }
+    
     setIsLoadingAi(true);
     const result = activeGame?.calculateResult(gameState.addValue, gameState.subValue) ?? 0;
     try {
+      const ai = new GoogleGenAI({ apiKey: safeApiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `کاربر بازی '${activeGame?.title}' را انجام داده و عدد نهایی ${result} است. یک جمله کوتاه، مرموز و هوشمندانه به فارسی بگو که نشان دهد ذهن او را خوانده‌ای. فقط متن را برگردان.`,
